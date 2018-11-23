@@ -1,7 +1,46 @@
 cmake_minimum_required(VERSION 2.8.9)
 project (hello-world)
 
-add_subdirectory("hereos")
+include (grpc.cmake.inc)
 
-add_executable(hello-world main.cpp)
-target_link_libraries(hello-world hereos_echo hereos_ingestion)
+# Proto file
+get_filename_component(echo_proto "protos/echo.proto" ABSOLUTE)
+get_filename_component(echo_proto_path "${echo_proto}" PATH)
+get_filename_component(ingestion_proto "protos/ingestion.proto" ABSOLUTE)
+get_filename_component(ingestion_proto_path "${ingestion_proto}" PATH)
+
+# Generated sources
+set(echo_proto_srcs "${CMAKE_CURRENT_BINARY_DIR}/echo.pb.cc")
+set(echo_proto_hdrs "${CMAKE_CURRENT_BINARY_DIR}/echo.pb.h")
+set(echo_grpc_srcs "${CMAKE_CURRENT_BINARY_DIR}/echo.grpc.pb.cc")
+set(echo_grpc_hdrs "${CMAKE_CURRENT_BINARY_DIR}/echo.grpc.pb.h")
+add_custom_command(
+      OUTPUT "${echo_proto_srcs}" "${echo_proto_hdrs}" "${echo_grpc_srcs}" "${echo_grpc_hdrs}"
+      COMMAND ${_PROTOBUF_PROTOC}
+      ARGS --grpc_out "${CMAKE_CURRENT_BINARY_DIR}"
+        --cpp_out "${CMAKE_CURRENT_BINARY_DIR}"
+        -I "${echo_proto_path}"
+        --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
+        "${echo_proto}"
+      DEPENDS "${echo_proto}")
+
+set(ingestion_proto_srcs "${CMAKE_CURRENT_BINARY_DIR}/ingestion.pb.cc")
+set(ingestion_proto_hdrs "${CMAKE_CURRENT_BINARY_DIR}/ingestion.pb.h")
+set(ingestion_grpc_srcs "${CMAKE_CURRENT_BINARY_DIR}/ingestion.grpc.pb.cc")
+set(ingestion_grpc_hdrs "${CMAKE_CURRENT_BINARY_DIR}/ingestion.grpc.pb.h")
+add_custom_command(
+      OUTPUT "${ingestion_proto_srcs}" "${ingestion_proto_hdrs}" "${ingestion_grpc_srcs}" "${ingestion_grpc_hdrs}"
+      COMMAND ${_PROTOBUF_PROTOC}
+      ARGS --grpc_out "${CMAKE_CURRENT_BINARY_DIR}"
+        --cpp_out "${CMAKE_CURRENT_BINARY_DIR}"
+        -I "${ingestion_proto_path}"
+        --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
+        "${ingestion_proto}"
+      DEPENDS "${ingestion_proto}")
+
+# Include generated *.pb.h files
+include_directories("${CMAKE_CURRENT_BINARY_DIR}")
+
+# Targets greeter_[async_](client|server)
+add_executable(hello-world main.cpp ${echo_proto_srcs} ${echo_grpc_srcs})
+target_link_libraries(hello-world ${_GRPC_GRPCPP_UNSECURE} ${_PROTOBUF_LIBPROTOBUF})
