@@ -1,5 +1,13 @@
 cmake_minimum_required(VERSION 2.8.9)
+
+# Include generated *.pb.h files
 include (grpc.cmake.inc)
+
+set (GRPC_INCLUDES "${CMAKE_CURRENT_BINARY_DIR}" PARENT_SCOPE)
+set (GRPC_INCLUDES "${CMAKE_CURRENT_BINARY_DIR}")
+set (GRPC_LIBS ${_GRPC_GRPCPP_UNSECURE} ${_PROTOBUF_LIBPROTOBUF} PARENT_SCOPE)
+include_directories("${GRPC_INCLUDES}")
+
 
 # Proto file
 get_filename_component(echo_proto "echo.proto" ABSOLUTE)
@@ -36,8 +44,6 @@ add_custom_command(
         "${ingestion_proto}"
       DEPENDS "${ingestion_proto}")
 
-# Include generated *.pb.h files
-include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 
 set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--export-all-symbols")
 
