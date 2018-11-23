@@ -4,8 +4,6 @@
 #include <cstdlib>
 #include <unistd.h>
 
-#include <grpcpp/grpcpp.h>
-
 #include "hereos/echo.h"
 #include "hereos/ingestion.h"
 
